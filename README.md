@@ -181,12 +181,73 @@ Connect to nutritional databases like:
 - [ ] Cloud sync and backup
 - [ ] Offline mode improvements
 
+## CI/CD Pipeline
+
+This project includes automated CI/CD pipelines using GitHub Actions:
+
+### Workflows
+
+1. **Android CI/CD** (`.github/workflows/android.yml`)
+   - Runs on push/PR to main/develop branches
+   - Automated testing (linting, unit tests)
+   - Android APK build and artifact upload
+   - Automatic release creation on main branch
+
+2. **iOS CI/CD** (`.github/workflows/ios.yml`)
+   - Runs on push/PR to main/develop branches
+   - Automated testing (linting, unit tests)
+   - iOS app build and artifact upload
+   - Automatic release creation on main branch
+
+3. **Automated Testing** (`.github/workflows/test.yml`)
+   - Multi-Node.js version testing (16, 18, 20)
+   - ESLint code quality checks
+   - Jest unit tests with coverage
+   - Integration tests
+   - Security vulnerability scanning
+
+4. **Release Workflow** (`.github/workflows/release.yml`)
+   - Manual release triggers
+   - Tag-based releases
+   - Platform-specific builds (Android/iOS/both)
+   - Signed APK generation (with keystore)
+
+### Setup for CI/CD
+
+1. **Secrets Configuration** (Repository Settings → Secrets):
+   ```
+   GITHUB_TOKEN (automatically provided)
+   KEYSTORE_BASE64 (base64 encoded keystore file)
+   KEYSTORE_ALIAS (keystore alias)
+   ```
+
+2. **Branch Protection Rules**:
+   - Require status checks to pass before merging
+   - Require branches to be up to date before merging
+   - Enable required status checks: `test`, `build-android`, `build-ios`
+
+3. **Release Process**:
+   ```bash
+   # Create a new release
+   git tag v1.0.0
+   git push origin v1.0.0
+   
+   # Or use GitHub Actions manual trigger
+   # Go to Actions → Release Workflow → Run workflow
+   ```
+
+### Build Status
+
+[![Android CI/CD](https://github.com/exequieltiglao/macro-tracker-demp/workflows/Android%20CI/CD/badge.svg)](https://github.com/exequieltiglao/macro-tracker-demp/actions/workflows/android.yml)
+[![iOS CI/CD](https://github.com/exequieltiglao/macro-tracker-demp/workflows/iOS%20CI/CD/badge.svg)](https://github.com/exequieltiglao/macro-tracker-demp/actions/workflows/ios.yml)
+[![Automated Testing](https://github.com/exequieltiglao/macro-tracker-demp/workflows/Automated%20Testing/badge.svg)](https://github.com/exequieltiglao/macro-tracker-demp/actions/workflows/test.yml)
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Ensure all CI/CD checks pass
 5. Submit a pull request
 
 ## License

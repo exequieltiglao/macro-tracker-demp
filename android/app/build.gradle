@@ -60,6 +60,7 @@ def enableProguardInReleaseBuilds = false
  * Set this to true to use Hermes instead of JSC
  */
 def hermesEnabled = (findProperty('react.enableHermes') ?: true)
+project.ext.hermesEnabled = hermesEnabled
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)

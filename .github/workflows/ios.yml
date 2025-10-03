@@ -1,0 +1,109 @@
+name: iOS CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false
+      
+  build-ios:
+    needs: test
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install iOS dependencies
+      run: |
+        cd ios
+        pod install --repo-update
+        
+    - name: Cache CocoaPods
+      uses: actions/cache@v3
+      with:
+        path: ios/Pods
+        key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pods-
+          
+    - name: Build iOS app
+      run: |
+        cd ios
+        xcodebuild -workspace MacroTrackerDemo.xcworkspace \
+                   -scheme MacroTrackerDemo \
+                   -configuration Debug \
+                   -destination 'platform=iOS Simulator,name=iPhone 14' \
+                   -derivedDataPath build \
+                   build
+                   
+    - name: Upload iOS build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-build
+        path: ios/build/Build/Products/Debug-iphonesimulator/MacroTrackerDemo.app
+        
+  deploy-ios:
+    needs: build-ios
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Download iOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ios-build
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: MacroTrackerDemo.app
+        tag_name: ios-v${{ github.run_number }}
+        name: iOS Release v${{ github.run_number }}
+        body: |
+          iOS App build for Macro Tracker Demo
+          
+          **Changes in this release:**
+          - Automated build from main branch
+          - Commit: ${{ github.sha }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
