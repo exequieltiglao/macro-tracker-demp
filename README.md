@@ -13,6 +13,25 @@ A hybrid mobile application for tracking macro intakes (calories, carbs, protein
 - 🔔 **Notifications**: Get reminders and achievement notifications
 - 💾 **Local Storage**: All data stored locally on device
 
+## Authentication (Google and Apple)
+
+The app supports sign-in with Google and (on iOS) Sign in with Apple.
+
+### Setup
+
+1. Google Sign-In
+   - Create a project in Google Cloud Console and configure OAuth consent screen.
+   - Create an OAuth Client ID of type "Web application" and note the Web Client ID.
+   - Replace the placeholder in `src/App.js` for `googleWebClientId` with your Web Client ID.
+   - Android: Add a reversed client ID if needed for Google Sign-In and ensure Play Services are available.
+
+2. Apple Sign In (iOS only)
+   - Requires building on macOS with Xcode and enabling Sign in with Apple capability.
+
+### Usage
+
+On launch, unauthenticated users see the login screen with Google and Apple buttons. Successful sign-in persists locally; you can sign out from within code via the `AuthContext` API.
+
 ## Screenshots
 
 The app includes four main screens:
