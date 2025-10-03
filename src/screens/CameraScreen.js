@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FOOD_DATABASE, searchFoods, getRandomFoods, calculateMacrosForServing} from '../services/FoodDatabase'
 import { getNutritionForQuery, isNutritionAPIConfigured } from '../services/NutritionAPI'
+import RealCamera from '../components/RealCamera'
 
 const {width, height} = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ const CameraScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [suggestedFoods, setSuggestedFoods] = useState([]);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     // Load suggested foods on component mount
@@ -33,33 +35,39 @@ const CameraScreen = () => {
   }, []);
 
   const takePicture = async () => {
-    // Simulate a recognized food phrase; in real camera, pass detected label & size
-    const candidates = getRandomFoods(1)
-    const phrase = `1 serving ${candidates[0].name}`
+    setShowCamera(true);
+  };
+
+  const handleFoodDetected = async (detectedText) => {
+    setShowCamera(false);
     try {
-      const apiFood = await getNutritionForQuery(phrase, 1)
-      setSelectedFood(apiFood)
-      setShowFoodModal(true)
+      const apiFood = await getNutritionForQuery(detectedText, 1);
+      setSelectedFood(apiFood);
+      setShowFoodModal(true);
     } catch (e) {
-      setSelectedFood(candidates[0])
-      setShowFoodModal(true)
+      // Fallback to local database
+      const candidates = getRandomFoods(1);
+      setSelectedFood(candidates[0]);
+      setShowFoodModal(true);
     }
-  }
+  };
+
+  const handleBarcodeScanned = async (barcodeValue) => {
+    setShowCamera(false);
+    // Try to find food by UPC/barcode
+    const barcodeQuery = `barcode:${barcodeValue}`;
+    try {
+      const apiFood = await getNutritionForQuery(barcodeQuery, 1);
+      setSelectedFood(apiFood);
+      setShowFoodModal(true);
+    } catch (e) {
+      Alert.alert('Barcode Not Found', 'This barcode is not in our database. Please try searching manually.');
+    }
+  };
 
   const scanBarcode = async () => {
-    // In a real app, we'd decode UPC and hit a UPC->nutrition endpoint.
-    // For now, map to a known product name phrase.
-    const phrase = '1 bar Protein Bar'
-    try {
-      const apiFood = await getNutritionForQuery(phrase, 1)
-      setSelectedFood(apiFood)
-      setShowFoodModal(true)
-    } catch (e) {
-      const mockFood = FOOD_DATABASE.protein_bar
-      setSelectedFood(mockFood)
-      setShowFoodModal(true)
-    }
-  }
+    setShowCamera(true);
+  };
 
   const searchFood = async (query) => {
     setSearchQuery(query)
@@ -287,6 +295,18 @@ const CameraScreen = () => {
             />
           </View>
         </View>
+      </Modal>
+
+      {/* Camera Modal */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}>
+        <RealCamera
+          onFoodDetected={handleFoodDetected}
+          onBarcodeScanned={handleBarcodeScanned}
+          onClose={() => setShowCamera(false)}
+        />
       </Modal>
     </View>
   );
