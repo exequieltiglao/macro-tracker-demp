@@ -28,9 +28,25 @@ const HomeScreen = () => {
     fat: 65,
   });
 
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [waterIntake, setWaterIntake] = useState(0);
+  const [waterGoal, setWaterGoal] = useState(8);
+
   useEffect(() => {
     loadTodayMacros();
     loadGoals();
+    loadWeeklyData();
+    loadWaterIntake();
+  }, []);
+
+  useEffect(() => {
+    // Refresh data when component comes into focus
+    const interval = setInterval(() => {
+      loadTodayMacros();
+      loadWaterIntake();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadTodayMacros = async () => {
@@ -53,6 +69,57 @@ const HomeScreen = () => {
       }
     } catch (error) {
       console.error('Error loading goals:', error);
+    }
+  };
+
+  const loadWeeklyData = async () => {
+    try {
+      const weeklyMacros = [];
+      const today = new Date();
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateString = date.toDateString();
+        
+        const savedMacros = await AsyncStorage.getItem(`macros_${dateString}`);
+        const macros = savedMacros ? JSON.parse(savedMacros) : { calories: 0, carbs: 0, protein: 0, fat: 0 };
+        
+        weeklyMacros.push({
+          date: dateString,
+          calories: macros.calories,
+          carbs: macros.carbs,
+          protein: macros.protein,
+          fat: macros.fat,
+        });
+      }
+      
+      setWeeklyData(weeklyMacros);
+    } catch (error) {
+      console.error('Error loading weekly data:', error);
+    }
+  };
+
+  const loadWaterIntake = async () => {
+    try {
+      const today = new Date().toDateString();
+      const savedWater = await AsyncStorage.getItem(`water_${today}`);
+      if (savedWater) {
+        setWaterIntake(parseInt(savedWater));
+      }
+    } catch (error) {
+      console.error('Error loading water intake:', error);
+    }
+  };
+
+  const addWater = async () => {
+    try {
+      const today = new Date().toDateString();
+      const newWaterIntake = waterIntake + 1;
+      setWaterIntake(newWaterIntake);
+      await AsyncStorage.setItem(`water_${today}`, newWaterIntake.toString());
+    } catch (error) {
+      console.error('Error saving water intake:', error);
     }
   };
 
@@ -83,10 +150,15 @@ const HomeScreen = () => {
   };
 
   const chartData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    labels: weeklyData.map((_, index) => {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const today = new Date();
+      const dayIndex = (today.getDay() - 6 + index + 7) % 7;
+      return days[dayIndex];
+    }),
     datasets: [
       {
-        data: [1200, 1500, 1800, 1600, 2000, 1700, 1900],
+        data: weeklyData.length > 0 ? weeklyData.map(day => day.calories) : [0, 0, 0, 0, 0, 0, 0],
         color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
         strokeWidth: 2,
       },
@@ -129,6 +201,30 @@ const HomeScreen = () => {
           unit="g"
           color="#E91E63"
         />
+      </View>
+
+      {/* Water Intake */}
+      <View style={styles.waterContainer}>
+        <Text style={styles.waterTitle}>Water Intake</Text>
+        <View style={styles.waterProgress}>
+          <View style={styles.waterInfo}>
+            <Text style={styles.waterAmount}>{waterIntake} / {waterGoal} cups</Text>
+            <Text style={styles.waterPercentage}>
+              {Math.round((waterIntake / waterGoal) * 100)}%
+            </Text>
+          </View>
+          <View style={styles.waterBar}>
+            <View
+              style={[
+                styles.waterFill,
+                {width: `${Math.min((waterIntake / waterGoal) * 100, 100)}%`},
+              ]}
+            />
+          </View>
+          <TouchableOpacity style={styles.addWaterButton} onPress={addWater}>
+            <Text style={styles.addWaterText}>+ Add Water</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.chartContainer}>
@@ -282,6 +378,70 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  waterContainer: {
+    margin: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  waterTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  waterProgress: {
+    alignItems: 'center',
+  },
+  waterInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
+  },
+  waterAmount: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  waterPercentage: {
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  waterBar: {
+    width: '100%',
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+    marginBottom: 15,
+    overflow: 'hidden',
+  },
+  waterFill: {
+    height: '100%',
+    backgroundColor: '#2196F3',
+    borderRadius: 10,
+  },
+  addWaterButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  addWaterText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

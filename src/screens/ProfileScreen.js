@@ -11,6 +11,15 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  calculateBMR,
+  calculateTDEE,
+  calculateMacroGoals,
+  calculateBMI,
+  getBMICategory,
+  calculateIdealWeightRange,
+  calculateWaterIntake,
+} from '../services/GoalCalculator';
 
 const ProfileScreen = () => {
   const [userProfile, setUserProfile] = useState({
@@ -35,9 +44,22 @@ const ProfileScreen = () => {
     weeklyReport: false,
   });
 
+  const [calculatedMetrics, setCalculatedMetrics] = useState({
+    bmr: 0,
+    tdee: 0,
+    bmi: 0,
+    bmiCategory: '',
+    idealWeight: { min: 0, max: 0, ideal: 0 },
+    waterIntake: { ml: 0, cups: 0, liters: 0 },
+  });
+
   useEffect(() => {
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    calculateMetrics();
+  }, [userProfile, goals]);
 
   const loadUserData = async () => {
     try {
@@ -56,6 +78,44 @@ const ProfileScreen = () => {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  const calculateMetrics = () => {
+    if (userProfile.weight && userProfile.height && userProfile.age && userProfile.gender) {
+      const weight = parseFloat(userProfile.weight);
+      const height = parseFloat(userProfile.height);
+      const age = parseInt(userProfile.age);
+      const gender = userProfile.gender;
+
+      // Calculate BMR and TDEE
+      const bmr = calculateBMR(weight, height, age, gender);
+      const tdee = calculateTDEE(bmr, userProfile.activityLevel);
+
+      // Calculate BMI
+      const bmi = calculateBMI(weight, height);
+      const bmiCategory = getBMICategory(bmi);
+
+      // Calculate ideal weight range
+      const idealWeight = calculateIdealWeightRange(height, gender);
+
+      // Calculate water intake
+      const waterIntake = calculateWaterIntake(weight, userProfile.activityLevel);
+
+      setCalculatedMetrics({
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+        bmi: Math.round(bmi * 10) / 10,
+        bmiCategory: bmiCategory.category,
+        idealWeight,
+        waterIntake,
+      });
+
+      // Auto-calculate goals if not manually set
+      if (!goals.calories || goals.calories === 2000) {
+        const newGoals = calculateMacroGoals(tdee, userProfile.goal);
+        setGoals(newGoals);
+      }
     }
   };
 
@@ -258,6 +318,48 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* Calculated Metrics */}
+      {calculatedMetrics.bmr > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Metrics</Text>
+          
+          <View style={styles.metricsGrid}>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{calculatedMetrics.bmr}</Text>
+              <Text style={styles.metricLabel}>BMR (cal/day)</Text>
+            </View>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{calculatedMetrics.tdee}</Text>
+              <Text style={styles.metricLabel}>TDEE (cal/day)</Text>
+            </View>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{calculatedMetrics.bmi}</Text>
+              <Text style={styles.metricLabel}>BMI</Text>
+              <Text style={[styles.metricSubtext, {color: getBMICategory(calculatedMetrics.bmi).color}]}>
+                {calculatedMetrics.bmiCategory}
+              </Text>
+            </View>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{calculatedMetrics.waterIntake.cups}</Text>
+              <Text style={styles.metricLabel}>Water (cups)</Text>
+            </View>
+          </View>
+          
+          <View style={styles.idealWeightContainer}>
+            <Text style={styles.idealWeightTitle}>Ideal Weight Range</Text>
+            <Text style={styles.idealWeightText}>
+              {calculatedMetrics.idealWeight.min} - {calculatedMetrics.idealWeight.max} kg
+            </Text>
+            <Text style={styles.idealWeightSubtext}>
+              Target: {calculatedMetrics.idealWeight.ideal} kg
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Macro Goals */}
       <View style={styles.section}>
@@ -515,6 +617,58 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  metricCard: {
+    backgroundColor: '#f8f8f8',
+    padding: 15,
+    borderRadius: 10,
+    width: '48%',
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 5,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  metricSubtext: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  idealWeightContainer: {
+    backgroundColor: '#e8f5e8',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  idealWeightTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  idealWeightText: {
+    fontSize: 18,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  idealWeightSubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
 });
 
