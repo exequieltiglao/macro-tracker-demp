@@ -178,25 +178,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support and questions, please open an issue in the repository or contact the development team.
 
-## Nutrition API Setup (optional)
-This app can call a nutrition API to calculate macros from text like "1 medium apple".
+## Nutrition API Setup
+By default the app uses **Open Food Facts** (free, no API key required) to enrich foods from names like "1 medium apple" or product names. If a product has per-serving nutrition, it is used; otherwise values are derived from per-100g and the serving size.
 
-Supported providers:
+Optionally, you can switch to paid providers and set keys:
 - Edamam Nutrition Data API
 - Nutritionix Natural Language API
 
-Configure provider and keys via environment variables before starting Metro:
-
-```bash
-# Choose one provider
-setx EDAMAM_APP_ID "your_app_id"
-setx EDAMAM_APP_KEY "your_app_key"
-# or
-setx NUTRITIONIX_APP_ID "your_app_id"
-setx NUTRITIONIX_APP_KEY "your_app_key"
-```
-
-By default the service falls back to the local food database if no keys are set or the API fails.
-
-Provider selection can be changed in `src/services/NutritionAPI.js` under `CONFIG.provider`.
+Configure provider and keys via environment variables and `CONFIG.provider` in `src/services/NutritionAPI.js`.
 
