@@ -6,17 +6,27 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const HistoryScreen = () => {
   const [foodHistory, setFoodHistory] = useState([]);
+  const [filteredHistory, setFilteredHistory] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toDateString());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadFoodHistory();
   }, []);
+
+  useEffect(() => {
+    filterAndSortHistory();
+  }, [foodHistory, searchQuery, sortBy, selectedDate]);
 
   const loadFoodHistory = async () => {
     try {
@@ -27,6 +37,68 @@ const HistoryScreen = () => {
     } catch (error) {
       console.error('Error loading food history:', error);
     }
+  };
+
+  const filterAndSortHistory = () => {
+    let filtered = [...foodHistory];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by selected date
+    if (selectedDate) {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.timestamp).toDateString();
+        return itemDate === selectedDate;
+      });
+    }
+
+    // Sort by selected criteria
+    switch (sortBy) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        break;
+      case 'calories_high':
+        filtered.sort((a, b) => b.calories - a.calories);
+        break;
+      case 'calories_low':
+        filtered.sort((a, b) => a.calories - b.calories);
+        break;
+      case 'name':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    setFilteredHistory(filtered);
+  };
+
+  const getDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      dates.push(date.toDateString());
+    }
+    
+    return dates;
+  };
+
+  const getTotalMacros = () => {
+    return filteredHistory.reduce((totals, item) => ({
+      calories: totals.calories + item.calories,
+      carbs: totals.carbs + item.carbs,
+      protein: totals.protein + item.protein,
+      fat: totals.fat + item.fat,
+    }), { calories: 0, carbs: 0, protein: 0, fat: 0 });
   };
 
   const deleteFoodEntry = async (index) => {
@@ -156,16 +228,119 @@ const HistoryScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Food History</Text>
         <Text style={styles.headerSubtitle}>
-          {foodHistory.length} entries logged
+          {filteredHistory.length} entries found
         </Text>
       </View>
+
+      {/* Search and Filter Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search food entries..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(!showFilters)}>
+          <Icon name="filter-list" size={20} color="#4CAF50" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Filter Options */}
+      {showFilters && (
+        <View style={styles.filtersContainer}>
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Date:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {getDateOptions().map((date) => (
+                <TouchableOpacity
+                  key={date}
+                  style={[
+                    styles.dateFilter,
+                    selectedDate === date && styles.selectedDateFilter,
+                  ]}
+                  onPress={() => setSelectedDate(date)}>
+                  <Text
+                    style={[
+                      styles.dateFilterText,
+                      selectedDate === date && styles.selectedDateFilterText,
+                    ]}>
+                    {new Date(date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Sort by:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {[
+                { key: 'newest', label: 'Newest' },
+                { key: 'oldest', label: 'Oldest' },
+                { key: 'calories_high', label: 'Calories ↑' },
+                { key: 'calories_low', label: 'Calories ↓' },
+                { key: 'name', label: 'Name' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.sortFilter,
+                    sortBy === option.key && styles.selectedSortFilter,
+                  ]}
+                  onPress={() => setSortBy(option.key)}>
+                  <Text
+                    style={[
+                      styles.sortFilterText,
+                      sortBy === option.key && styles.selectedSortFilterText,
+                    ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* Summary Card */}
+      {filteredHistory.length > 0 && (
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Daily Summary</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Total Calories:</Text>
+            <Text style={styles.summaryValue}>{getTotalMacros().calories.toFixed(0)}</Text>
+          </View>
+          <View style={styles.summaryMacros}>
+            <Text style={styles.summaryMacro}>C: {getTotalMacros().carbs.toFixed(1)}g</Text>
+            <Text style={styles.summaryMacro}>P: {getTotalMacros().protein.toFixed(1)}g</Text>
+            <Text style={styles.summaryMacro}>F: {getTotalMacros().fat.toFixed(1)}g</Text>
+          </View>
+        </View>
+      )}
       
       <FlatList
-        data={getSortedDates()}
-        renderItem={renderDateSection}
-        keyExtractor={(item) => item}
+        data={filteredHistory}
+        renderItem={renderFoodItem}
+        keyExtractor={(item, index) => `${item.timestamp}-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Icon name="search-off" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>No entries found</Text>
+            <Text style={styles.emptySubtext}>
+              Try adjusting your search or filters
+            </Text>
+          </View>
+        }
       />
     </View>
   );
@@ -304,6 +479,130 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    marginRight: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  filterButton: {
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+  },
+  filtersContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  filterRow: {
+    marginBottom: 15,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  dateFilter: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  selectedDateFilter: {
+    backgroundColor: '#4CAF50',
+  },
+  dateFilterText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedDateFilterText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  sortFilter: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  selectedSortFilter: {
+    backgroundColor: '#4CAF50',
+  },
+  sortFilterText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedSortFilterText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  summaryCard: {
+    backgroundColor: '#fff',
+    margin: 20,
+    padding: 20,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  summaryMacros: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  summaryMacro: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
   },
 });
 

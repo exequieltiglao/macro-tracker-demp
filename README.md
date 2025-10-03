@@ -178,3 +178,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support and questions, please open an issue in the repository or contact the development team.
 
+## Nutrition API Setup
+By default the app uses **Open Food Facts** (free, no API key required) to enrich foods from names like "1 medium apple" or product names. If a product has per-serving nutrition, it is used; otherwise values are derived from per-100g and the serving size.
+
+Optionally, you can switch to paid providers and set keys:
+- Edamam Nutrition Data API
+- Nutritionix Natural Language API
+
+Configure provider and keys via environment variables and `CONFIG.provider` in `src/services/NutritionAPI.js`.
+

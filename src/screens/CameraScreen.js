@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,95 +9,92 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  FlatList,
 } from 'react-native';
-import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {FOOD_DATABASE, searchFoods, getRandomFoods, calculateMacrosForServing} from '../services/FoodDatabase'
+import { getNutritionForQuery, isNutritionAPIConfigured } from '../services/NutritionAPI'
+import RealCamera from '../components/RealCamera'
 
 const {width, height} = Dimensions.get('window');
 
 const CameraScreen = () => {
-  const [hasPermission, setHasPermission] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scannedCode, setScannedCode] = useState(null);
   const [showFoodModal, setShowFoodModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
   const [servingSize, setServingSize] = useState('1');
-  const [cameraMode, setCameraMode] = useState('photo'); // 'photo' or 'barcode'
-  
-  const cameraRef = useRef(null);
-  const devices = useCameraDevices();
-  const device = devices.back;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [suggestedFoods, setSuggestedFoods] = useState([]);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
-    requestCameraPermission();
+    // Load suggested foods on component mount
+    setSuggestedFoods(getRandomFoods(6));
   }, []);
 
-  const requestCameraPermission = async () => {
-    try {
-      const permission = await request(PERMISSIONS.ANDROID.CAMERA);
-      if (permission === RESULTS.GRANTED) {
-        setHasPermission(true);
-      } else {
-        Alert.alert('Permission Required', 'Camera permission is needed to scan food items.');
-      }
-    } catch (error) {
-      console.error('Permission request error:', error);
-    }
-  };
-
   const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePhoto({
-          qualityPrioritization: 'speed',
-          flash: 'off',
-        });
-        
-        // Simulate food recognition (in a real app, you'd use ML/AI)
-        const mockFood = {
-          name: 'Apple',
-          calories: 95,
-          carbs: 25,
-          protein: 0.5,
-          fat: 0.3,
-          serving: '1 medium',
-        };
-        
-        setSelectedFood(mockFood);
-        setShowFoodModal(true);
-      } catch (error) {
-        console.error('Error taking picture:', error);
-        Alert.alert('Error', 'Failed to take picture');
-      }
+    setShowCamera(true);
+  };
+
+  const handleFoodDetected = async (detectedText) => {
+    setShowCamera(false);
+    try {
+      const apiFood = await getNutritionForQuery(detectedText, 1);
+      setSelectedFood(apiFood);
+      setShowFoodModal(true);
+    } catch (e) {
+      // Fallback to local database
+      const candidates = getRandomFoods(1);
+      setSelectedFood(candidates[0]);
+      setShowFoodModal(true);
     }
   };
 
-  const scanBarcode = () => {
-    setIsScanning(true);
-    setCameraMode('barcode');
-    
-    // Simulate barcode scanning (in a real app, you'd use a barcode scanner library)
-    setTimeout(() => {
-      const mockBarcode = '1234567890123';
-      setScannedCode(mockBarcode);
-      
-      // Mock food data from barcode
-      const mockFood = {
-        name: 'Protein Bar',
-        calories: 200,
-        carbs: 20,
-        protein: 15,
-        fat: 8,
-        serving: '1 bar',
-      };
-      
-      setSelectedFood(mockFood);
+  const handleBarcodeScanned = async (barcodeValue) => {
+    setShowCamera(false);
+    // Try to find food by UPC/barcode
+    const barcodeQuery = `barcode:${barcodeValue}`;
+    try {
+      const apiFood = await getNutritionForQuery(barcodeQuery, 1);
+      setSelectedFood(apiFood);
       setShowFoodModal(true);
-      setIsScanning(false);
-    }, 2000);
+    } catch (e) {
+      Alert.alert('Barcode Not Found', 'This barcode is not in our database. Please try searching manually.');
+    }
   };
+
+  const scanBarcode = async () => {
+    setShowCamera(true);
+  };
+
+  const searchFood = async (query) => {
+    setSearchQuery(query)
+    if (query.length === 0) {
+      setSearchResults([])
+      return
+    }
+
+    // Try local search for responsiveness
+    const local = searchFoods(query)
+    setSearchResults(local)
+  }
+
+  const selectFood = async (food) => {
+    // Try to enrich via API using name + serving
+    const phrase = `${food.serving ? food.serving : '1 serving'} ${food.name}`
+    try {
+      const apiFood = await getNutritionForQuery(phrase, 1)
+      setSelectedFood(apiFood)
+    } catch (e) {
+      setSelectedFood(food)
+    }
+    setShowSearchModal(false)
+    setShowFoodModal(true)
+    setSearchQuery('')
+    setSearchResults([])
+  }
 
   const addFoodToLog = async () => {
     if (!selectedFood) return;
@@ -106,12 +103,11 @@ const CameraScreen = () => {
       const today = new Date().toDateString();
       const servingMultiplier = parseFloat(servingSize) || 1;
       
+      // Calculate macros for the serving size
+      const calculatedFood = calculateMacrosForServing(selectedFood, servingMultiplier);
+      
       const foodEntry = {
-        ...selectedFood,
-        calories: selectedFood.calories * servingMultiplier,
-        carbs: selectedFood.carbs * servingMultiplier,
-        protein: selectedFood.protein * servingMultiplier,
-        fat: selectedFood.fat * servingMultiplier,
+        ...calculatedFood,
         servingSize: servingSize,
         timestamp: new Date().toISOString(),
       };
@@ -150,78 +146,48 @@ const CameraScreen = () => {
     }
   };
 
-  if (!hasPermission) {
-    return (
-      <View style={styles.permissionContainer}>
-        <Icon name="camera-alt" size={80} color="#ccc" />
-        <Text style={styles.permissionText}>Camera permission required</Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestCameraPermission}>
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (!device) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading camera...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Camera
-        ref={cameraRef}
-        style={styles.camera}
-        device={device}
-        isActive={true}
-        photo={true}
-      />
+      <View style={styles.mockCamera}>
+        <Icon name="camera-alt" size={100} color="#ccc" />
+        <Text style={styles.mockCameraText}>Camera Demo Mode</Text>
+        <Text style={styles.mockCameraSubtext}>Tap buttons below to simulate food scanning</Text>
+      </View>
 
-      <View style={styles.overlay}>
-        <View style={styles.topControls}>
-          <TouchableOpacity
-            style={[styles.modeButton, cameraMode === 'photo' && styles.activeModeButton]}
-            onPress={() => setCameraMode('photo')}>
-            <Icon name="camera-alt" size={24} color={cameraMode === 'photo' ? '#4CAF50' : '#fff'} />
-            <Text style={[styles.modeText, cameraMode === 'photo' && styles.activeModeText]}>
-              Photo
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.modeButton, cameraMode === 'barcode' && styles.activeModeButton]}
-            onPress={() => setCameraMode('barcode')}>
-            <Icon name="qr-code-scanner" size={24} color={cameraMode === 'barcode' ? '#4CAF50' : '#fff'} />
-            <Text style={[styles.modeText, cameraMode === 'barcode' && styles.activeModeText]}>
-              Barcode
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.controlsContainer}>
+        <TouchableOpacity style={styles.photoButton} onPress={takePicture}>
+          <Icon name="camera-alt" size={24} color="#fff" />
+          <Text style={styles.buttonText}>Take Photo</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.barcodeButton} onPress={scanBarcode}>
+          <Icon name="qr-code-scanner" size={24} color="#fff" />
+          <Text style={styles.buttonText}>Scan Barcode</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.scanArea}>
-          {cameraMode === 'barcode' && (
-            <View style={styles.barcodeOverlay}>
-              <View style={styles.scanFrame} />
-              <Text style={styles.scanText}>Position barcode within the frame</Text>
-            </View>
-          )}
-        </View>
+      <View style={styles.searchContainer}>
+        <TouchableOpacity 
+          style={styles.searchButton} 
+          onPress={() => setShowSearchModal(true)}>
+          <Icon name="search" size={20} color="#666" />
+          <Text style={styles.searchButtonText}>Search for food...</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.bottomControls}>
-          {cameraMode === 'photo' ? (
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <View style={styles.captureButtonInner} />
+      <View style={styles.suggestionsContainer}>
+        <Text style={styles.suggestionsTitle}>Suggested Foods</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {suggestedFoods.map((food, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.suggestionCard}
+              onPress={() => selectFood(food)}>
+              <Text style={styles.suggestionName}>{food.name}</Text>
+              <Text style={styles.suggestionCalories}>{food.calories} cal</Text>
             </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.scanButton} onPress={scanBarcode}>
-              <Icon name="qr-code-scanner" size={30} color="#fff" />
-              <Text style={styles.scanButtonText}>Scan Barcode</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Food Details Modal */}
@@ -282,6 +248,66 @@ const CameraScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Search Modal */}
+      <Modal
+        visible={showSearchModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSearchModal(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Search Food</Text>
+              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                <Icon name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search for food..."
+                value={searchQuery}
+                onChangeText={searchFood}
+                autoFocus={true}
+              />
+            </View>
+
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={styles.searchResultItem}
+                  onPress={() => selectFood(item)}>
+                  <View style={styles.searchResultContent}>
+                    <Text style={styles.searchResultName}>{item.name}</Text>
+                    <Text style={styles.searchResultServing}>{item.serving}</Text>
+                    <Text style={styles.searchResultCalories}>
+                      {item.calories} cal • {item.protein}g protein
+                    </Text>
+                  </View>
+                  <Icon name="add" size={24} color="#4CAF50" />
+                </TouchableOpacity>
+              )}
+              style={styles.searchResultsList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Camera Modal */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}>
+        <RealCamera
+          onFoodDetected={handleFoodDetected}
+          onBarcodeScanned={handleBarcodeScanned}
+          onClose={() => setShowCamera(false)}
+        />
+      </Modal>
     </View>
   );
 };
@@ -289,132 +315,61 @@ const CameraScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#f5f5f5',
   },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'space-between',
-  },
-  topControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  modeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginHorizontal: 10,
-  },
-  activeModeButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.8)',
-  },
-  modeText: {
-    color: '#fff',
-    marginLeft: 5,
-    fontSize: 16,
-  },
-  activeModeText: {
-    color: '#4CAF50',
-  },
-  scanArea: {
+  mockCamera: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  barcodeOverlay: {
-    alignItems: 'center',
-  },
-  scanFrame: {
-    width: 250,
-    height: 150,
+    backgroundColor: '#e0e0e0',
+    margin: 20,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#4CAF50',
-    backgroundColor: 'transparent',
-    borderRadius: 10,
+    borderColor: '#ccc',
+    borderStyle: 'dashed',
   },
-  scanText: {
-    color: '#fff',
-    fontSize: 16,
+  mockCameraText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#666',
     marginTop: 20,
+  },
+  mockCameraSubtext: {
+    fontSize: 16,
+    color: '#888',
     textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 40,
   },
-  bottomControls: {
-    alignItems: 'center',
-    paddingBottom: 50,
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
   },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-  },
-  scanButton: {
+  photoButton: {
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 25,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  scanButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  permissionText: {
-    fontSize: 18,
-    color: '#666',
-    marginVertical: 20,
-  },
-  permissionButton: {
-    backgroundColor: '#4CAF50',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
+    elevation: 3,
   },
-  permissionButtonText: {
+  barcodeButton: {
+    backgroundColor: '#2196F3',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    elevation: 3,
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  loadingText: {
-    fontSize: 18,
-    color: '#666',
+    marginLeft: 8,
   },
   modalContainer: {
     flex: 1,
@@ -504,6 +459,99 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  searchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  searchButtonText: {
+    marginLeft: 10,
+    color: '#666',
+    fontSize: 16,
+  },
+  suggestionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  suggestionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  suggestionCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginRight: 10,
+    borderRadius: 10,
+    width: 120,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  suggestionName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  suggestionCalories: {
+    fontSize: 12,
+    color: '#666',
+  },
+  searchInputContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    backgroundColor: '#f8f8f8',
+  },
+  searchResultsList: {
+    maxHeight: 400,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  searchResultContent: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  searchResultServing: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  searchResultCalories: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 2,
   },
 });
 
