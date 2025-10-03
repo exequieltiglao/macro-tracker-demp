@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {FOOD_DATABASE, searchFoods, getRandomFoods, calculateMacrosForServing} from '../services/FoodDatabase';
+import {FOOD_DATABASE, searchFoods, getRandomFoods, calculateMacrosForServing} from '../services/FoodDatabase'
+import { getNutritionForQuery, isNutritionAPIConfigured } from '../services/NutritionAPI'
 
 const {width, height} = Dimensions.get('window');
 
@@ -31,43 +32,61 @@ const CameraScreen = () => {
     setSuggestedFoods(getRandomFoods(6));
   }, []);
 
-  const takePicture = () => {
-    // Simulate food recognition (in a real app, you'd use ML/AI)
-    const randomFoods = getRandomFoods(3);
-    const mockFood = randomFoods[0];
-    
-    setSelectedFood(mockFood);
-    setShowFoodModal(true);
-  };
-
-  const scanBarcode = () => {
-    // Simulate barcode scanning (in a real app, you'd use a barcode scanner library)
-    setTimeout(() => {
-      // Mock food data from barcode - use actual food from database
-      const mockFood = FOOD_DATABASE.protein_bar;
-      
-      setSelectedFood(mockFood);
-      setShowFoodModal(true);
-    }, 1000);
-  };
-
-  const searchFood = (query) => {
-    setSearchQuery(query);
-    if (query.length > 0) {
-      const results = searchFoods(query);
-      setSearchResults(results);
-    } else {
-      setSearchResults([]);
+  const takePicture = async () => {
+    // Simulate a recognized food phrase; in real camera, pass detected label & size
+    const candidates = getRandomFoods(1)
+    const phrase = `1 serving ${candidates[0].name}`
+    try {
+      const apiFood = await getNutritionForQuery(phrase, 1)
+      setSelectedFood(apiFood)
+      setShowFoodModal(true)
+    } catch (e) {
+      setSelectedFood(candidates[0])
+      setShowFoodModal(true)
     }
-  };
+  }
 
-  const selectFood = (food) => {
-    setSelectedFood(food);
-    setShowSearchModal(false);
-    setShowFoodModal(true);
-    setSearchQuery('');
-    setSearchResults([]);
-  };
+  const scanBarcode = async () => {
+    // In a real app, we'd decode UPC and hit a UPC->nutrition endpoint.
+    // For now, map to a known product name phrase.
+    const phrase = '1 bar Protein Bar'
+    try {
+      const apiFood = await getNutritionForQuery(phrase, 1)
+      setSelectedFood(apiFood)
+      setShowFoodModal(true)
+    } catch (e) {
+      const mockFood = FOOD_DATABASE.protein_bar
+      setSelectedFood(mockFood)
+      setShowFoodModal(true)
+    }
+  }
+
+  const searchFood = async (query) => {
+    setSearchQuery(query)
+    if (query.length === 0) {
+      setSearchResults([])
+      return
+    }
+
+    // Try local search for responsiveness
+    const local = searchFoods(query)
+    setSearchResults(local)
+  }
+
+  const selectFood = async (food) => {
+    // Try to enrich via API using name + serving
+    const phrase = `${food.serving ? food.serving : '1 serving'} ${food.name}`
+    try {
+      const apiFood = await getNutritionForQuery(phrase, 1)
+      setSelectedFood(apiFood)
+    } catch (e) {
+      setSelectedFood(food)
+    }
+    setShowSearchModal(false)
+    setShowFoodModal(true)
+    setSearchQuery('')
+    setSearchResults([])
+  }
 
   const addFoodToLog = async () => {
     if (!selectedFood) return;
