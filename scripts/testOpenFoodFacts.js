@@ -5,7 +5,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const resp = await fetch(url, { ...options, signal: controller.signal });
+    const resp = await fetch(url, {...options, signal: controller.signal});
     return resp;
   } finally {
     clearTimeout(id);
@@ -28,7 +28,12 @@ function mapProduct(query, product) {
   const proteinServing = n['proteins_serving'];
   const fatServing = n['fat_serving'];
 
-  if (kcalServing != null || carbsServing != null || proteinServing != null || fatServing != null) {
+  if (
+    kcalServing != null ||
+    carbsServing != null ||
+    proteinServing != null ||
+    fatServing != null
+  ) {
     return {
       name: product?.product_name || query,
       calories: kcalServing ?? 0,
@@ -58,7 +63,9 @@ function mapProduct(query, product) {
 }
 
 async function searchOFF(query) {
-  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&json=1&page_size=1`;
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+    query,
+  )}&search_simple=1&json=1&page_size=1`;
   const resp = await fetchWithTimeout(url);
   if (!resp.ok) throw new Error(`OFF error ${resp.status}`);
   const json = await resp.json();
@@ -70,11 +77,9 @@ async function searchOFF(query) {
 (async () => {
   try {
     const queries = process.argv.slice(2);
-    const tests = queries.length ? queries : [
-      '1 medium apple',
-      'protein bar',
-      '200g chicken breast'
-    ];
+    const tests = queries.length
+      ? queries
+      : ['1 medium apple', 'protein bar', '200g chicken breast'];
 
     for (const q of tests) {
       const res = await searchOFF(q);
@@ -87,4 +92,3 @@ async function searchOFF(query) {
     process.exit(1);
   }
 })();
-

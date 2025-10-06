@@ -18,7 +18,7 @@ Ensure your `android/app/build.gradle` includes:
 android {
     compileSdkVersion 33
     buildToolsVersion "33.0.0"
-    
+
     defaultConfig {
         applicationId "com.macrotracker"
         minSdkVersion 21
@@ -58,12 +58,13 @@ The app uses `react-native-vision-camera` which requires:
 ## Troubleshooting
 
 ### Camera Permission Issues
+
 - Ensure permissions are properly declared in AndroidManifest.xml
 - Check that the app requests permissions at runtime
 - Verify device has camera hardware
 
 ### Build Issues
+
 - Clean build: `cd android && ./gradlew clean && cd ..`
 - Reset Metro: `npx react-native start --reset-cache`
 - Reinstall dependencies: `rm -rf node_modules && npm install`
-

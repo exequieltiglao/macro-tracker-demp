@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -49,8 +49,8 @@ const ProfileScreen = () => {
     tdee: 0,
     bmi: 0,
     bmiCategory: '',
-    idealWeight: { min: 0, max: 0, ideal: 0 },
-    waterIntake: { ml: 0, cups: 0, liters: 0 },
+    idealWeight: {min: 0, max: 0, ideal: 0},
+    waterIntake: {ml: 0, cups: 0, liters: 0},
   });
 
   useEffect(() => {
@@ -59,13 +59,15 @@ const ProfileScreen = () => {
 
   useEffect(() => {
     calculateMetrics();
-  }, [userProfile, goals]);
+  }, [userProfile, goals, calculateMetrics]);
 
   const loadUserData = async () => {
     try {
       const savedProfile = await AsyncStorage.getItem('user_profile');
       const savedGoals = await AsyncStorage.getItem('user_goals');
-      const savedNotifications = await AsyncStorage.getItem('notification_settings');
+      const savedNotifications = await AsyncStorage.getItem(
+        'notification_settings',
+      );
 
       if (savedProfile) {
         setUserProfile(JSON.parse(savedProfile));
@@ -81,8 +83,13 @@ const ProfileScreen = () => {
     }
   };
 
-  const calculateMetrics = () => {
-    if (userProfile.weight && userProfile.height && userProfile.age && userProfile.gender) {
+  const calculateMetrics = useCallback(() => {
+    if (
+      userProfile.weight &&
+      userProfile.height &&
+      userProfile.age &&
+      userProfile.gender
+    ) {
       const weight = parseFloat(userProfile.weight);
       const height = parseFloat(userProfile.height);
       const age = parseInt(userProfile.age);
@@ -100,7 +107,10 @@ const ProfileScreen = () => {
       const idealWeight = calculateIdealWeightRange(height, gender);
 
       // Calculate water intake
-      const waterIntake = calculateWaterIntake(weight, userProfile.activityLevel);
+      const waterIntake = calculateWaterIntake(
+        weight,
+        userProfile.activityLevel,
+      );
 
       setCalculatedMetrics({
         bmr: Math.round(bmr),
@@ -117,13 +127,16 @@ const ProfileScreen = () => {
         setGoals(newGoals);
       }
     }
-  };
+  }, [userProfile, goals, setGoals]);
 
   const saveUserData = async () => {
     try {
       await AsyncStorage.setItem('user_profile', JSON.stringify(userProfile));
       await AsyncStorage.setItem('user_goals', JSON.stringify(goals));
-      await AsyncStorage.setItem('notification_settings', JSON.stringify(notifications));
+      await AsyncStorage.setItem(
+        'notification_settings',
+        JSON.stringify(notifications),
+      );
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.error('Error saving user data:', error);
@@ -160,8 +173,8 @@ const ProfileScreen = () => {
     }
 
     const protein = Math.round(weight * 2.2); // 1g per lb
-    const fat = Math.round(calories * 0.25 / 9); // 25% of calories from fat
-    const carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+    const fat = Math.round((calories * 0.25) / 9); // 25% of calories from fat
+    const carbs = Math.round((calories - protein * 4 - fat * 9) / 4);
 
     setGoals({
       calories: Math.max(calories, 1200),
@@ -188,12 +201,12 @@ const ProfileScreen = () => {
                 'user_goals',
                 'notification_settings',
               ]);
-              
+
               // Clear daily macros for all dates
               const keys = await AsyncStorage.getAllKeys();
               const macroKeys = keys.filter(key => key.startsWith('macros_'));
               await AsyncStorage.multiRemove(macroKeys);
-              
+
               Alert.alert('Success', 'All data has been cleared');
               loadUserData();
             } catch (error) {
@@ -202,11 +215,17 @@ const ProfileScreen = () => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  const InputField = ({label, value, onChangeText, placeholder, keyboardType = 'default'}) => (
+  const InputField = ({
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    keyboardType = 'default',
+  }) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>{label}</Text>
       <TextInput
@@ -225,7 +244,7 @@ const ProfileScreen = () => {
       <TextInput
         style={styles.goalInput}
         value={value.toString()}
-        onChangeText={(text) => onChangeText(parseInt(text) || 0)}
+        onChangeText={text => onChangeText(parseInt(text) || 0)}
         keyboardType="numeric"
       />
       <Text style={styles.goalUnit}>{unit}</Text>
@@ -242,34 +261,34 @@ const ProfileScreen = () => {
       {/* Personal Information */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
-        
+
         <InputField
           label="Name"
           value={userProfile.name}
-          onChangeText={(text) => setUserProfile({...userProfile, name: text})}
+          onChangeText={text => setUserProfile({...userProfile, name: text})}
           placeholder="Enter your name"
         />
-        
+
         <InputField
           label="Age"
           value={userProfile.age}
-          onChangeText={(text) => setUserProfile({...userProfile, age: text})}
+          onChangeText={text => setUserProfile({...userProfile, age: text})}
           placeholder="Enter your age"
           keyboardType="numeric"
         />
-        
+
         <InputField
           label="Weight (kg)"
           value={userProfile.weight}
-          onChangeText={(text) => setUserProfile({...userProfile, weight: text})}
+          onChangeText={text => setUserProfile({...userProfile, weight: text})}
           placeholder="Enter your weight"
           keyboardType="numeric"
         />
-        
+
         <InputField
           label="Height (cm)"
           value={userProfile.height}
-          onChangeText={(text) => setUserProfile({...userProfile, height: text})}
+          onChangeText={text => setUserProfile({...userProfile, height: text})}
           placeholder="Enter your height"
           keyboardType="numeric"
         />
@@ -278,29 +297,35 @@ const ProfileScreen = () => {
       {/* Activity Level */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Activity Level</Text>
-        {['sedentary', 'light', 'moderate', 'active', 'very_active'].map((level) => (
-          <TouchableOpacity
-            key={level}
-            style={[
-              styles.activityOption,
-              userProfile.activityLevel === level && styles.selectedActivity,
-            ]}
-            onPress={() => setUserProfile({...userProfile, activityLevel: level})}>
-            <Text
+        {['sedentary', 'light', 'moderate', 'active', 'very_active'].map(
+          level => (
+            <TouchableOpacity
+              key={level}
               style={[
-                styles.activityText,
-                userProfile.activityLevel === level && styles.selectedActivityText,
-              ]}>
-              {level.charAt(0).toUpperCase() + level.slice(1).replace('_', ' ')}
-            </Text>
-          </TouchableOpacity>
-        ))}
+                styles.activityOption,
+                userProfile.activityLevel === level && styles.selectedActivity,
+              ]}
+              onPress={() =>
+                setUserProfile({...userProfile, activityLevel: level})
+              }>
+              <Text
+                style={[
+                  styles.activityText,
+                  userProfile.activityLevel === level &&
+                    styles.selectedActivityText,
+                ]}>
+                {level.charAt(0).toUpperCase() +
+                  level.slice(1).replace('_', ' ')}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
       </View>
 
       {/* Goal */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Goal</Text>
-        {['lose', 'maintain', 'gain'].map((goal) => (
+        {['lose', 'maintain', 'gain'].map(goal => (
           <TouchableOpacity
             key={goal}
             style={[
@@ -323,36 +348,43 @@ const ProfileScreen = () => {
       {calculatedMetrics.bmr > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Metrics</Text>
-          
+
           <View style={styles.metricsGrid}>
             <View style={styles.metricCard}>
               <Text style={styles.metricValue}>{calculatedMetrics.bmr}</Text>
               <Text style={styles.metricLabel}>BMR (cal/day)</Text>
             </View>
-            
+
             <View style={styles.metricCard}>
               <Text style={styles.metricValue}>{calculatedMetrics.tdee}</Text>
               <Text style={styles.metricLabel}>TDEE (cal/day)</Text>
             </View>
-            
+
             <View style={styles.metricCard}>
               <Text style={styles.metricValue}>{calculatedMetrics.bmi}</Text>
               <Text style={styles.metricLabel}>BMI</Text>
-              <Text style={[styles.metricSubtext, {color: getBMICategory(calculatedMetrics.bmi).color}]}>
+              <Text
+                style={[
+                  styles.metricSubtext,
+                  {color: getBMICategory(calculatedMetrics.bmi).color},
+                ]}>
                 {calculatedMetrics.bmiCategory}
               </Text>
             </View>
-            
+
             <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>{calculatedMetrics.waterIntake.cups}</Text>
+              <Text style={styles.metricValue}>
+                {calculatedMetrics.waterIntake.cups}
+              </Text>
               <Text style={styles.metricLabel}>Water (cups)</Text>
             </View>
           </View>
-          
+
           <View style={styles.idealWeightContainer}>
             <Text style={styles.idealWeightTitle}>Ideal Weight Range</Text>
             <Text style={styles.idealWeightText}>
-              {calculatedMetrics.idealWeight.min} - {calculatedMetrics.idealWeight.max} kg
+              {calculatedMetrics.idealWeight.min} -{' '}
+              {calculatedMetrics.idealWeight.max} kg
             </Text>
             <Text style={styles.idealWeightSubtext}>
               Target: {calculatedMetrics.idealWeight.ideal} kg
@@ -365,36 +397,38 @@ const ProfileScreen = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Daily Macro Goals</Text>
-          <TouchableOpacity style={styles.calculateButton} onPress={calculateRecommendedGoals}>
+          <TouchableOpacity
+            style={styles.calculateButton}
+            onPress={calculateRecommendedGoals}>
             <Text style={styles.calculateButtonText}>Calculate</Text>
           </TouchableOpacity>
         </View>
-        
+
         <GoalInput
           label="Calories"
           value={goals.calories}
-          onChangeText={(value) => setGoals({...goals, calories: value})}
+          onChangeText={value => setGoals({...goals, calories: value})}
           unit="kcal"
         />
-        
+
         <GoalInput
           label="Carbohydrates"
           value={goals.carbs}
-          onChangeText={(value) => setGoals({...goals, carbs: value})}
+          onChangeText={value => setGoals({...goals, carbs: value})}
           unit="g"
         />
-        
+
         <GoalInput
           label="Protein"
           value={goals.protein}
-          onChangeText={(value) => setGoals({...goals, protein: value})}
+          onChangeText={value => setGoals({...goals, protein: value})}
           unit="g"
         />
-        
+
         <GoalInput
           label="Fat"
           value={goals.fat}
-          onChangeText={(value) => setGoals({...goals, fat: value})}
+          onChangeText={value => setGoals({...goals, fat: value})}
           unit="g"
         />
       </View>
@@ -402,36 +436,36 @@ const ProfileScreen = () => {
       {/* Notifications */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Notifications</Text>
-        
+
         <View style={styles.notificationItem}>
           <Text style={styles.notificationLabel}>Meal Reminders</Text>
           <Switch
             value={notifications.mealReminders}
-            onValueChange={(value) =>
+            onValueChange={value =>
               setNotifications({...notifications, mealReminders: value})
             }
             trackColor={{false: '#767577', true: '#4CAF50'}}
             thumbColor={notifications.mealReminders ? '#ffffff' : '#f4f3f4'}
           />
         </View>
-        
+
         <View style={styles.notificationItem}>
           <Text style={styles.notificationLabel}>Goal Achieved</Text>
           <Switch
             value={notifications.goalAchieved}
-            onValueChange={(value) =>
+            onValueChange={value =>
               setNotifications({...notifications, goalAchieved: value})
             }
             trackColor={{false: '#767577', true: '#4CAF50'}}
             thumbColor={notifications.goalAchieved ? '#ffffff' : '#f4f3f4'}
           />
         </View>
-        
+
         <View style={styles.notificationItem}>
           <Text style={styles.notificationLabel}>Weekly Report</Text>
           <Switch
             value={notifications.weeklyReport}
-            onValueChange={(value) =>
+            onValueChange={value =>
               setNotifications({...notifications, weeklyReport: value})
             }
             trackColor={{false: '#767577', true: '#4CAF50'}}
@@ -445,7 +479,7 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.saveButton} onPress={saveUserData}>
           <Text style={styles.saveButtonText}>Save Profile</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.clearButton} onPress={clearAllData}>
           <Text style={styles.clearButtonText}>Clear All Data</Text>
         </TouchableOpacity>
@@ -673,4 +707,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
-

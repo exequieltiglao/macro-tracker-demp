@@ -11,6 +11,7 @@ import {
   Camera,
   useCameraDevices,
   useFrameProcessor,
+  runOnJS,
 } from 'react-native-vision-camera';
 import {scanBarcodes, BarcodeFormat} from 'vision-camera-code-scanner';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -40,21 +41,24 @@ const RealCamera = ({onFoodDetected, onBarcodeScanned, onClose}) => {
     }
   };
 
-  const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    const barcodes = scanBarcodes(frame, [BarcodeFormat.ALL_FORMATS], {
-      checkInverted: true,
-    });
-    
-    if (barcodes.length > 0 && isActive) {
-      const barcode = barcodes[0];
-      if (barcode.rawValue) {
-        runOnJS(handleBarcodeDetected)(barcode.rawValue);
-      }
-    }
-  }, [isActive]);
+  const frameProcessor = useFrameProcessor(
+    frame => {
+      'worklet';
+      const barcodes = scanBarcodes(frame, [BarcodeFormat.ALL_FORMATS], {
+        checkInverted: true,
+      });
 
-  const handleBarcodeDetected = (barcodeValue) => {
+      if (barcodes.length > 0 && isActive) {
+        const barcode = barcodes[0];
+        if (barcode.rawValue) {
+          runOnJS(handleBarcodeDetected)(barcode.rawValue);
+        }
+      }
+    },
+    [isActive],
+  );
+
+  const handleBarcodeDetected = barcodeValue => {
     if (isActive) {
       setIsActive(false);
       onBarcodeScanned(barcodeValue);
@@ -69,7 +73,7 @@ const RealCamera = ({onFoodDetected, onBarcodeScanned, onClose}) => {
           qualityPrioritization: 'speed',
           flash: flashMode,
         });
-        
+
         // For now, we'll simulate food detection from photo
         // In a real app, you'd send the photo to an ML service
         setTimeout(() => {
@@ -93,7 +97,9 @@ const RealCamera = ({onFoodDetected, onBarcodeScanned, onClose}) => {
       <View style={styles.permissionContainer}>
         <Icon name="camera-alt" size={80} color="#ccc" />
         <Text style={styles.permissionText}>Camera permission required</Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={checkCameraPermission}>
+        <TouchableOpacity
+          style={styles.permissionButton}
+          onPress={checkCameraPermission}>
           <Text style={styles.permissionButtonText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
@@ -120,7 +126,7 @@ const RealCamera = ({onFoodDetected, onBarcodeScanned, onClose}) => {
         frameProcessor={frameProcessor}
         frameProcessorFps={5}
       />
-      
+
       {/* Overlay */}
       <View style={styles.overlay}>
         <View style={styles.topControls}>
@@ -128,20 +134,29 @@ const RealCamera = ({onFoodDetected, onBarcodeScanned, onClose}) => {
             <Icon name="close" size={24} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
-            <Icon name={flashMode === 'off' ? 'flash-off' : 'flash-on'} size={24} color="#fff" />
+            <Icon
+              name={flashMode === 'off' ? 'flash-off' : 'flash-on'}
+              size={24}
+              color="#fff"
+            />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.centerArea}>
           <View style={styles.scanArea}>
             <View style={styles.scanFrame} />
-            <Text style={styles.scanText}>Position food or barcode in frame</Text>
+            <Text style={styles.scanText}>
+              Position food or barcode in frame
+            </Text>
           </View>
         </View>
-        
+
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.captureButton, isCapturing && styles.capturingButton]}
+            style={[
+              styles.captureButton,
+              isCapturing && styles.capturingButton,
+            ]}
             onPress={takePicture}
             disabled={isCapturing}>
             <Icon name="camera-alt" size={32} color="#fff" />

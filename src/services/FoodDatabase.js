@@ -1,7 +1,7 @@
 // Comprehensive food database with nutritional information
 export const FOOD_DATABASE = {
   // Fruits
-  'apple': {
+  apple: {
     name: 'Apple',
     calories: 95,
     carbs: 25,
@@ -9,9 +9,9 @@ export const FOOD_DATABASE = {
     fat: 0.3,
     fiber: 4,
     serving: '1 medium (182g)',
-    category: 'fruit'
+    category: 'fruit',
   },
-  'banana': {
+  banana: {
     name: 'Banana',
     calories: 105,
     carbs: 27,
@@ -19,9 +19,9 @@ export const FOOD_DATABASE = {
     fat: 0.4,
     fiber: 3,
     serving: '1 medium (118g)',
-    category: 'fruit'
+    category: 'fruit',
   },
-  'orange': {
+  orange: {
     name: 'Orange',
     calories: 62,
     carbs: 15.4,
@@ -29,9 +29,9 @@ export const FOOD_DATABASE = {
     fat: 0.2,
     fiber: 3.1,
     serving: '1 medium (154g)',
-    category: 'fruit'
+    category: 'fruit',
   },
-  'strawberries': {
+  strawberries: {
     name: 'Strawberries',
     calories: 49,
     carbs: 11.7,
@@ -39,9 +39,9 @@ export const FOOD_DATABASE = {
     fat: 0.5,
     fiber: 3,
     serving: '1 cup (152g)',
-    category: 'fruit'
+    category: 'fruit',
   },
-  'blueberries': {
+  blueberries: {
     name: 'Blueberries',
     calories: 84,
     carbs: 21.4,
@@ -49,11 +49,11 @@ export const FOOD_DATABASE = {
     fat: 0.5,
     fiber: 3.6,
     serving: '1 cup (148g)',
-    category: 'fruit'
+    category: 'fruit',
   },
 
   // Vegetables
-  'broccoli': {
+  broccoli: {
     name: 'Broccoli',
     calories: 55,
     carbs: 11,
@@ -61,9 +61,9 @@ export const FOOD_DATABASE = {
     fat: 0.6,
     fiber: 5.1,
     serving: '1 cup (91g)',
-    category: 'vegetable'
+    category: 'vegetable',
   },
-  'spinach': {
+  spinach: {
     name: 'Spinach',
     calories: 7,
     carbs: 1.1,
@@ -71,9 +71,9 @@ export const FOOD_DATABASE = {
     fat: 0.1,
     fiber: 0.7,
     serving: '1 cup (30g)',
-    category: 'vegetable'
+    category: 'vegetable',
   },
-  'carrots': {
+  carrots: {
     name: 'Carrots',
     calories: 50,
     carbs: 12,
@@ -81,9 +81,9 @@ export const FOOD_DATABASE = {
     fat: 0.3,
     fiber: 3.6,
     serving: '1 cup (128g)',
-    category: 'vegetable'
+    category: 'vegetable',
   },
-  'sweet_potato': {
+  sweet_potato: {
     name: 'Sweet Potato',
     calories: 112,
     carbs: 26,
@@ -91,11 +91,11 @@ export const FOOD_DATABASE = {
     fat: 0.1,
     fiber: 3.8,
     serving: '1 medium (114g)',
-    category: 'vegetable'
+    category: 'vegetable',
   },
 
   // Proteins
-  'chicken_breast': {
+  chicken_breast: {
     name: 'Chicken Breast',
     calories: 165,
     carbs: 0,
@@ -103,9 +103,9 @@ export const FOOD_DATABASE = {
     fat: 3.6,
     fiber: 0,
     serving: '100g',
-    category: 'protein'
+    category: 'protein',
   },
-  'salmon': {
+  salmon: {
     name: 'Salmon',
     calories: 208,
     carbs: 0,
@@ -113,9 +113,9 @@ export const FOOD_DATABASE = {
     fat: 12,
     fiber: 0,
     serving: '100g',
-    category: 'protein'
+    category: 'protein',
   },
-  'eggs': {
+  eggs: {
     name: 'Eggs',
     calories: 155,
     carbs: 1.1,
@@ -123,9 +123,9 @@ export const FOOD_DATABASE = {
     fat: 11,
     fiber: 0,
     serving: '2 large (100g)',
-    category: 'protein'
+    category: 'protein',
   },
-  'greek_yogurt': {
+  greek_yogurt: {
     name: 'Greek Yogurt',
     calories: 100,
     carbs: 6,
@@ -133,9 +133,9 @@ export const FOOD_DATABASE = {
     fat: 0,
     fiber: 0,
     serving: '1 cup (170g)',
-    category: 'protein'
+    category: 'protein',
   },
-  'tofu': {
+  tofu: {
     name: 'Tofu',
     calories: 76,
     carbs: 1.9,
@@ -143,11 +143,11 @@ export const FOOD_DATABASE = {
     fat: 4.8,
     fiber: 0.3,
     serving: '100g',
-    category: 'protein'
+    category: 'protein',
   },
 
   // Grains
-  'brown_rice': {
+  brown_rice: {
     name: 'Brown Rice',
     calories: 111,
     carbs: 23,
@@ -155,9 +155,9 @@ export const FOOD_DATABASE = {
     fat: 0.9,
     fiber: 1.8,
     serving: '1/2 cup cooked (98g)',
-    category: 'grain'
+    category: 'grain',
   },
-  'quinoa': {
+  quinoa: {
     name: 'Quinoa',
     calories: 120,
     carbs: 22,
@@ -165,9 +165,9 @@ export const FOOD_DATABASE = {
     fat: 1.9,
     fiber: 2.8,
     serving: '1/2 cup cooked (92g)',
-    category: 'grain'
+    category: 'grain',
   },
-  'oats': {
+  oats: {
     name: 'Oats',
     calories: 154,
     carbs: 27,
@@ -175,9 +175,9 @@ export const FOOD_DATABASE = {
     fat: 2.6,
     fiber: 4,
     serving: '1/2 cup (40g)',
-    category: 'grain'
+    category: 'grain',
   },
-  'whole_wheat_bread': {
+  whole_wheat_bread: {
     name: 'Whole Wheat Bread',
     calories: 81,
     carbs: 13.8,
@@ -185,11 +185,11 @@ export const FOOD_DATABASE = {
     fat: 1.1,
     fiber: 1.9,
     serving: '1 slice (28g)',
-    category: 'grain'
+    category: 'grain',
   },
 
   // Nuts & Seeds
-  'almonds': {
+  almonds: {
     name: 'Almonds',
     calories: 164,
     carbs: 6.1,
@@ -197,9 +197,9 @@ export const FOOD_DATABASE = {
     fat: 14.2,
     fiber: 3.5,
     serving: '1 oz (28g)',
-    category: 'nuts'
+    category: 'nuts',
   },
-  'walnuts': {
+  walnuts: {
     name: 'Walnuts',
     calories: 185,
     carbs: 3.9,
@@ -207,9 +207,9 @@ export const FOOD_DATABASE = {
     fat: 18.5,
     fiber: 1.9,
     serving: '1 oz (28g)',
-    category: 'nuts'
+    category: 'nuts',
   },
-  'chia_seeds': {
+  chia_seeds: {
     name: 'Chia Seeds',
     calories: 137,
     carbs: 12,
@@ -217,11 +217,11 @@ export const FOOD_DATABASE = {
     fat: 8.6,
     fiber: 10.6,
     serving: '1 oz (28g)',
-    category: 'nuts'
+    category: 'nuts',
   },
 
   // Dairy
-  'milk': {
+  milk: {
     name: 'Milk',
     calories: 103,
     carbs: 12,
@@ -229,9 +229,9 @@ export const FOOD_DATABASE = {
     fat: 2.4,
     fiber: 0,
     serving: '1 cup (244g)',
-    category: 'dairy'
+    category: 'dairy',
   },
-  'cheese': {
+  cheese: {
     name: 'Cheddar Cheese',
     calories: 113,
     carbs: 0.4,
@@ -239,11 +239,11 @@ export const FOOD_DATABASE = {
     fat: 9.3,
     fiber: 0,
     serving: '1 oz (28g)',
-    category: 'dairy'
+    category: 'dairy',
   },
 
   // Processed Foods
-  'protein_bar': {
+  protein_bar: {
     name: 'Protein Bar',
     calories: 200,
     carbs: 20,
@@ -251,9 +251,9 @@ export const FOOD_DATABASE = {
     fat: 8,
     fiber: 3,
     serving: '1 bar (50g)',
-    category: 'processed'
+    category: 'processed',
   },
-  'granola': {
+  granola: {
     name: 'Granola',
     calories: 471,
     carbs: 64,
@@ -261,33 +261,34 @@ export const FOOD_DATABASE = {
     fat: 20,
     fiber: 5,
     serving: '1 cup (122g)',
-    category: 'processed'
-  }
+    category: 'processed',
+  },
 };
 
 // Search function to find foods by name or category
-export const searchFoods = (query) => {
+export const searchFoods = query => {
   const searchTerm = query.toLowerCase();
   return Object.entries(FOOD_DATABASE)
-    .filter(([key, food]) => 
-      food.name.toLowerCase().includes(searchTerm) ||
-      food.category.toLowerCase().includes(searchTerm)
+    .filter(
+      ([key, food]) =>
+        food.name.toLowerCase().includes(searchTerm) ||
+        food.category.toLowerCase().includes(searchTerm),
     )
-    .map(([key, food]) => ({ key, ...food }));
+    .map(([key, food]) => ({key, ...food}));
 };
 
 // Get random food suggestions
 export const getRandomFoods = (count = 5) => {
   const foodKeys = Object.keys(FOOD_DATABASE);
   const randomKeys = foodKeys.sort(() => 0.5 - Math.random()).slice(0, count);
-  return randomKeys.map(key => ({ key, ...FOOD_DATABASE[key] }));
+  return randomKeys.map(key => ({key, ...FOOD_DATABASE[key]}));
 };
 
 // Get foods by category
-export const getFoodsByCategory = (category) => {
+export const getFoodsByCategory = category => {
   return Object.entries(FOOD_DATABASE)
     .filter(([key, food]) => food.category === category)
-    .map(([key, food]) => ({ key, ...food }));
+    .map(([key, food]) => ({key, ...food}));
 };
 
 // Calculate macros for serving size

@@ -1,5 +1,17 @@
-import React, {createContext, useCallback, useEffect, useMemo, useState} from 'react';
-import {configureGoogleSignin, getStoredUser, signInWithApple, signInWithGoogle, signOut} from '../services/AuthService';
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  configureGoogleSignin,
+  getStoredUser,
+  signInWithApple,
+  signInWithGoogle,
+  signOut,
+} from '../services/AuthService';
 
 export const AuthContext = createContext({
   user: null,
@@ -7,7 +19,7 @@ export const AuthContext = createContext({
   signInGoogle: async () => {},
   signInApple: async () => {},
   signOut: async () => {},
-  configure: (_cfg) => {},
+  configure: _cfg => {},
 });
 
 export const AuthProvider = ({children, googleWebClientId}) => {
@@ -40,19 +52,22 @@ export const AuthProvider = ({children, googleWebClientId}) => {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({
-    user,
-    initializing,
-    signInGoogle: signInGoogleHandler,
-    signInApple: signInAppleHandler,
-    signOut: signOutHandler,
-  }), [user, initializing, signInGoogleHandler, signInAppleHandler, signOutHandler]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      initializing,
+      signInGoogle: signInGoogleHandler,
+      signInApple: signInAppleHandler,
+      signOut: signOutHandler,
+    }),
+    [
+      user,
+      initializing,
+      signInGoogleHandler,
+      signInAppleHandler,
+      signOutHandler,
+    ],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-

@@ -13,9 +13,17 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {FOOD_DATABASE, searchFoods, getRandomFoods, calculateMacrosForServing} from '../services/FoodDatabase'
-import { getNutritionForQuery, isNutritionAPIConfigured } from '../services/NutritionAPI'
-import RealCamera from '../components/RealCamera'
+import {
+  FOOD_DATABASE,
+  searchFoods,
+  getRandomFoods,
+  calculateMacrosForServing,
+} from '../services/FoodDatabase';
+import {
+  getNutritionForQuery,
+  isNutritionAPIConfigured,
+} from '../services/NutritionAPI';
+import RealCamera from '../components/RealCamera';
 
 const {width, height} = Dimensions.get('window');
 
@@ -38,7 +46,7 @@ const CameraScreen = () => {
     setShowCamera(true);
   };
 
-  const handleFoodDetected = async (detectedText) => {
+  const handleFoodDetected = async detectedText => {
     setShowCamera(false);
     try {
       const apiFood = await getNutritionForQuery(detectedText, 1);
@@ -52,7 +60,7 @@ const CameraScreen = () => {
     }
   };
 
-  const handleBarcodeScanned = async (barcodeValue) => {
+  const handleBarcodeScanned = async barcodeValue => {
     setShowCamera(false);
     // Try to find food by UPC/barcode
     const barcodeQuery = `barcode:${barcodeValue}`;
@@ -61,7 +69,10 @@ const CameraScreen = () => {
       setSelectedFood(apiFood);
       setShowFoodModal(true);
     } catch (e) {
-      Alert.alert('Barcode Not Found', 'This barcode is not in our database. Please try searching manually.');
+      Alert.alert(
+        'Barcode Not Found',
+        'This barcode is not in our database. Please try searching manually.',
+      );
     }
   };
 
@@ -69,32 +80,32 @@ const CameraScreen = () => {
     setShowCamera(true);
   };
 
-  const searchFood = async (query) => {
-    setSearchQuery(query)
+  const searchFood = async query => {
+    setSearchQuery(query);
     if (query.length === 0) {
-      setSearchResults([])
-      return
+      setSearchResults([]);
+      return;
     }
 
     // Try local search for responsiveness
-    const local = searchFoods(query)
-    setSearchResults(local)
-  }
+    const local = searchFoods(query);
+    setSearchResults(local);
+  };
 
-  const selectFood = async (food) => {
+  const selectFood = async food => {
     // Try to enrich via API using name + serving
-    const phrase = `${food.serving ? food.serving : '1 serving'} ${food.name}`
+    const phrase = `${food.serving ? food.serving : '1 serving'} ${food.name}`;
     try {
-      const apiFood = await getNutritionForQuery(phrase, 1)
-      setSelectedFood(apiFood)
+      const apiFood = await getNutritionForQuery(phrase, 1);
+      setSelectedFood(apiFood);
     } catch (e) {
-      setSelectedFood(food)
+      setSelectedFood(food);
     }
-    setShowSearchModal(false)
-    setShowFoodModal(true)
-    setSearchQuery('')
-    setSearchResults([])
-  }
+    setShowSearchModal(false);
+    setShowFoodModal(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   const addFoodToLog = async () => {
     if (!selectedFood) return;
@@ -102,10 +113,13 @@ const CameraScreen = () => {
     try {
       const today = new Date().toDateString();
       const servingMultiplier = parseFloat(servingSize) || 1;
-      
+
       // Calculate macros for the serving size
-      const calculatedFood = calculateMacrosForServing(selectedFood, servingMultiplier);
-      
+      const calculatedFood = calculateMacrosForServing(
+        selectedFood,
+        servingMultiplier,
+      );
+
       const foodEntry = {
         ...calculatedFood,
         servingSize: servingSize,
@@ -114,12 +128,14 @@ const CameraScreen = () => {
 
       // Load existing macros for today
       const existingMacros = await AsyncStorage.getItem(`macros_${today}`);
-      let dailyMacros = existingMacros ? JSON.parse(existingMacros) : {
-        calories: 0,
-        carbs: 0,
-        protein: 0,
-        fat: 0,
-      };
+      let dailyMacros = existingMacros
+        ? JSON.parse(existingMacros)
+        : {
+            calories: 0,
+            carbs: 0,
+            protein: 0,
+            fat: 0,
+          };
 
       // Add new food macros
       dailyMacros.calories += foodEntry.calories;
@@ -128,7 +144,10 @@ const CameraScreen = () => {
       dailyMacros.fat += foodEntry.fat;
 
       // Save updated macros
-      await AsyncStorage.setItem(`macros_${today}`, JSON.stringify(dailyMacros));
+      await AsyncStorage.setItem(
+        `macros_${today}`,
+        JSON.stringify(dailyMacros),
+      );
 
       // Save food entry to history
       const foodHistory = await AsyncStorage.getItem('food_history');
@@ -151,7 +170,9 @@ const CameraScreen = () => {
       <View style={styles.mockCamera}>
         <Icon name="camera-alt" size={100} color="#ccc" />
         <Text style={styles.mockCameraText}>Camera Demo Mode</Text>
-        <Text style={styles.mockCameraSubtext}>Tap buttons below to simulate food scanning</Text>
+        <Text style={styles.mockCameraSubtext}>
+          Tap buttons below to simulate food scanning
+        </Text>
       </View>
 
       <View style={styles.controlsContainer}>
@@ -159,7 +180,7 @@ const CameraScreen = () => {
           <Icon name="camera-alt" size={24} color="#fff" />
           <Text style={styles.buttonText}>Take Photo</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.barcodeButton} onPress={scanBarcode}>
           <Icon name="qr-code-scanner" size={24} color="#fff" />
           <Text style={styles.buttonText}>Scan Barcode</Text>
@@ -167,8 +188,8 @@ const CameraScreen = () => {
       </View>
 
       <View style={styles.searchContainer}>
-        <TouchableOpacity 
-          style={styles.searchButton} 
+        <TouchableOpacity
+          style={styles.searchButton}
           onPress={() => setShowSearchModal(true)}>
           <Icon name="search" size={20} color="#666" />
           <Text style={styles.searchButtonText}>Search for food...</Text>
@@ -208,12 +229,16 @@ const CameraScreen = () => {
             {selectedFood && (
               <ScrollView style={styles.modalBody}>
                 <Text style={styles.foodName}>{selectedFood.name}</Text>
-                <Text style={styles.servingSize}>Serving: {selectedFood.serving}</Text>
+                <Text style={styles.servingSize}>
+                  Serving: {selectedFood.serving}
+                </Text>
 
                 <View style={styles.macrosContainer}>
                   <View style={styles.macroItem}>
                     <Text style={styles.macroLabel}>Calories</Text>
-                    <Text style={styles.macroValue}>{selectedFood.calories}</Text>
+                    <Text style={styles.macroValue}>
+                      {selectedFood.calories}
+                    </Text>
                   </View>
                   <View style={styles.macroItem}>
                     <Text style={styles.macroLabel}>Carbs</Text>
@@ -221,7 +246,9 @@ const CameraScreen = () => {
                   </View>
                   <View style={styles.macroItem}>
                     <Text style={styles.macroLabel}>Protein</Text>
-                    <Text style={styles.macroValue}>{selectedFood.protein}g</Text>
+                    <Text style={styles.macroValue}>
+                      {selectedFood.protein}g
+                    </Text>
                   </View>
                   <View style={styles.macroItem}>
                     <Text style={styles.macroLabel}>Fat</Text>
@@ -240,7 +267,9 @@ const CameraScreen = () => {
                   />
                 </View>
 
-                <TouchableOpacity style={styles.addButton} onPress={addFoodToLog}>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={addFoodToLog}>
                   <Text style={styles.addButtonText}>Add to Daily Log</Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -283,7 +312,9 @@ const CameraScreen = () => {
                   onPress={() => selectFood(item)}>
                   <View style={styles.searchResultContent}>
                     <Text style={styles.searchResultName}>{item.name}</Text>
-                    <Text style={styles.searchResultServing}>{item.serving}</Text>
+                    <Text style={styles.searchResultServing}>
+                      {item.serving}
+                    </Text>
                     <Text style={styles.searchResultCalories}>
                       {item.calories} cal • {item.protein}g protein
                     </Text>
@@ -498,7 +529,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
@@ -556,4 +587,3 @@ const styles = StyleSheet.create({
 });
 
 export default CameraScreen;
-

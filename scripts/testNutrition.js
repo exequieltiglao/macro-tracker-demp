@@ -3,14 +3,15 @@
 
 (async () => {
   try {
-    const { getNutritionForQuery } = await import('../src/services/NutritionAPI.js');
+    const {getNutritionForQuery} = await import(
+      '../src/services/NutritionAPI.js'
+    );
 
     const queries = process.argv.slice(2);
-    const tests = queries.length > 0 ? queries : [
-      '1 medium apple',
-      '1 bar protein bar',
-      '200g chicken breast',
-    ];
+    const tests =
+      queries.length > 0
+        ? queries
+        : ['1 medium apple', '1 bar protein bar', '200g chicken breast'];
 
     for (const q of tests) {
       const result = await getNutritionForQuery(q, 1);
@@ -23,4 +24,3 @@
     process.exit(1);
   }
 })();
-

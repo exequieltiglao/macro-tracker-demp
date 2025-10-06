@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import {render} from '@testing-library/react-native';
 import App from '../App';
 
 describe('App', () => {
@@ -9,7 +9,7 @@ describe('App', () => {
   });
 
   it('renders the main app structure', () => {
-    const { getByTestId } = render(<App />);
+    const {getByTestId} = render(<App />);
     // The app should render without throwing errors
     expect(() => render(<App />)).not.toThrow();
   });

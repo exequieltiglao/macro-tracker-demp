@@ -1,0 +1,10 @@
+node_modules/
+coverage/
+android/
+ios/
+*.log
+.DS_Store
+build/
+dist/
+*.bundle.js
+*.bundle.map

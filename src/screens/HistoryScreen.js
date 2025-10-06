@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ const HistoryScreen = () => {
 
   useEffect(() => {
     filterAndSortHistory();
-  }, [foodHistory, searchQuery, sortBy, selectedDate]);
+  }, [foodHistory, searchQuery, sortBy, selectedDate, filterAndSortHistory]);
 
   const loadFoodHistory = async () => {
     try {
@@ -39,13 +39,13 @@ const HistoryScreen = () => {
     }
   };
 
-  const filterAndSortHistory = () => {
+  const filterAndSortHistory = useCallback(() => {
     let filtered = [...foodHistory];
 
     // Filter by search query
     if (searchQuery.trim()) {
       filtered = filtered.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -77,31 +77,34 @@ const HistoryScreen = () => {
     }
 
     setFilteredHistory(filtered);
-  };
+  }, [foodHistory, searchQuery, sortBy, selectedDate]);
 
   const getDateOptions = () => {
     const dates = [];
     const today = new Date();
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       dates.push(date.toDateString());
     }
-    
+
     return dates;
   };
 
   const getTotalMacros = () => {
-    return filteredHistory.reduce((totals, item) => ({
-      calories: totals.calories + item.calories,
-      carbs: totals.carbs + item.carbs,
-      protein: totals.protein + item.protein,
-      fat: totals.fat + item.fat,
-    }), { calories: 0, carbs: 0, protein: 0, fat: 0 });
+    return filteredHistory.reduce(
+      (totals, item) => ({
+        calories: totals.calories + item.calories,
+        carbs: totals.carbs + item.carbs,
+        protein: totals.protein + item.protein,
+        fat: totals.fat + item.fat,
+      }),
+      {calories: 0, carbs: 0, protein: 0, fat: 0},
+    );
   };
 
-  const deleteFoodEntry = async (index) => {
+  const deleteFoodEntry = async index => {
     Alert.alert(
       'Delete Entry',
       'Are you sure you want to delete this food entry?',
@@ -114,29 +117,32 @@ const HistoryScreen = () => {
             try {
               const updatedHistory = foodHistory.filter((_, i) => i !== index);
               setFoodHistory(updatedHistory);
-              await AsyncStorage.setItem('food_history', JSON.stringify(updatedHistory));
+              await AsyncStorage.setItem(
+                'food_history',
+                JSON.stringify(updatedHistory),
+              );
             } catch (error) {
               console.error('Error deleting food entry:', error);
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  const formatTime = (timestamp) => {
+  const formatTime = timestamp => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
   };
 
-  const formatDate = (timestamp) => {
+  const formatDate = timestamp => {
     const date = new Date(timestamp);
     return date.toLocaleDateString();
   };
 
   const groupFoodByDate = () => {
     const grouped = {};
-    foodHistory.forEach((food) => {
+    foodHistory.forEach(food => {
       const date = formatDate(food.timestamp);
       if (!grouped[date]) {
         grouped[date] = [];
@@ -155,7 +161,7 @@ const HistoryScreen = () => {
         </Text>
         <Text style={styles.foodTime}>{formatTime(item.timestamp)}</Text>
       </View>
-      
+
       <View style={styles.macrosInfo}>
         <Text style={styles.calories}>{item.calories.toFixed(0)} cal</Text>
         <View style={styles.macrosRow}>
@@ -164,7 +170,7 @@ const HistoryScreen = () => {
           <Text style={styles.macroText}>F: {item.fat.toFixed(1)}g</Text>
         </View>
       </View>
-      
+
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => deleteFoodEntry(index)}>
@@ -176,27 +182,36 @@ const HistoryScreen = () => {
   const renderDateSection = ({item: date}) => {
     const groupedFood = groupFoodByDate();
     const foodsForDate = groupedFood[date] || [];
-    
+
     if (foodsForDate.length === 0) return null;
 
-    const totalCalories = foodsForDate.reduce((sum, food) => sum + food.calories, 0);
+    const totalCalories = foodsForDate.reduce(
+      (sum, food) => sum + food.calories,
+      0,
+    );
     const totalCarbs = foodsForDate.reduce((sum, food) => sum + food.carbs, 0);
-    const totalProtein = foodsForDate.reduce((sum, food) => sum + food.protein, 0);
+    const totalProtein = foodsForDate.reduce(
+      (sum, food) => sum + food.protein,
+      0,
+    );
     const totalFat = foodsForDate.reduce((sum, food) => sum + food.fat, 0);
 
     return (
       <View style={styles.dateSection}>
         <View style={styles.dateHeader}>
           <Text style={styles.dateText}>{date}</Text>
-          <Text style={styles.totalCalories}>{totalCalories.toFixed(0)} cal</Text>
-        </View>
-        
-        <View style={styles.dateSummary}>
-          <Text style={styles.summaryText}>
-            C: {totalCarbs.toFixed(1)}g | P: {totalProtein.toFixed(1)}g | F: {totalFat.toFixed(1)}g
+          <Text style={styles.totalCalories}>
+            {totalCalories.toFixed(0)} cal
           </Text>
         </View>
-        
+
+        <View style={styles.dateSummary}>
+          <Text style={styles.summaryText}>
+            C: {totalCarbs.toFixed(1)}g | P: {totalProtein.toFixed(1)}g | F:{' '}
+            {totalFat.toFixed(1)}g
+          </Text>
+        </View>
+
         {foodsForDate.map((food, index) => (
           <View key={`${food.timestamp}-${index}`}>
             {renderFoodItem({item: food, index: foodHistory.indexOf(food)})}
@@ -235,7 +250,12 @@ const HistoryScreen = () => {
       {/* Search and Filter Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search food entries..."
@@ -256,7 +276,7 @@ const HistoryScreen = () => {
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Date:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {getDateOptions().map((date) => (
+              {getDateOptions().map(date => (
                 <TouchableOpacity
                   key={date}
                   style={[
@@ -278,17 +298,17 @@ const HistoryScreen = () => {
               ))}
             </ScrollView>
           </View>
-          
+
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Sort by:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {[
-                { key: 'newest', label: 'Newest' },
-                { key: 'oldest', label: 'Oldest' },
-                { key: 'calories_high', label: 'Calories ↑' },
-                { key: 'calories_low', label: 'Calories ↓' },
-                { key: 'name', label: 'Name' },
-              ].map((option) => (
+                {key: 'newest', label: 'Newest'},
+                {key: 'oldest', label: 'Oldest'},
+                {key: 'calories_high', label: 'Calories ↑'},
+                {key: 'calories_low', label: 'Calories ↓'},
+                {key: 'name', label: 'Name'},
+              ].map(option => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
@@ -316,16 +336,24 @@ const HistoryScreen = () => {
           <Text style={styles.summaryTitle}>Daily Summary</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total Calories:</Text>
-            <Text style={styles.summaryValue}>{getTotalMacros().calories.toFixed(0)}</Text>
+            <Text style={styles.summaryValue}>
+              {getTotalMacros().calories.toFixed(0)}
+            </Text>
           </View>
           <View style={styles.summaryMacros}>
-            <Text style={styles.summaryMacro}>C: {getTotalMacros().carbs.toFixed(1)}g</Text>
-            <Text style={styles.summaryMacro}>P: {getTotalMacros().protein.toFixed(1)}g</Text>
-            <Text style={styles.summaryMacro}>F: {getTotalMacros().fat.toFixed(1)}g</Text>
+            <Text style={styles.summaryMacro}>
+              C: {getTotalMacros().carbs.toFixed(1)}g
+            </Text>
+            <Text style={styles.summaryMacro}>
+              P: {getTotalMacros().protein.toFixed(1)}g
+            </Text>
+            <Text style={styles.summaryMacro}>
+              F: {getTotalMacros().fat.toFixed(1)}g
+            </Text>
           </View>
         </View>
       )}
-      
+
       <FlatList
         data={filteredHistory}
         renderItem={renderFoodItem}
@@ -568,7 +596,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
@@ -607,4 +635,3 @@ const styles = StyleSheet.create({
 });
 
 export default HistoryScreen;
-

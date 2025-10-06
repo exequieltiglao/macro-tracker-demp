@@ -76,15 +76,17 @@ const HomeScreen = () => {
     try {
       const weeklyMacros = [];
       const today = new Date();
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         const dateString = date.toDateString();
-        
+
         const savedMacros = await AsyncStorage.getItem(`macros_${dateString}`);
-        const macros = savedMacros ? JSON.parse(savedMacros) : { calories: 0, carbs: 0, protein: 0, fat: 0 };
-        
+        const macros = savedMacros
+          ? JSON.parse(savedMacros)
+          : {calories: 0, carbs: 0, protein: 0, fat: 0};
+
         weeklyMacros.push({
           date: dateString,
           calories: macros.calories,
@@ -93,7 +95,7 @@ const HomeScreen = () => {
           fat: macros.fat,
         });
       }
-      
+
       setWeeklyData(weeklyMacros);
     } catch (error) {
       console.error('Error loading weekly data:', error);
@@ -125,7 +127,7 @@ const HomeScreen = () => {
 
   const MacroCard = ({title, current, goal, unit, color}) => {
     const percentage = goal > 0 ? (current / goal) * 100 : 0;
-    
+
     return (
       <View style={styles.macroCard}>
         <LinearGradient
@@ -158,7 +160,10 @@ const HomeScreen = () => {
     }),
     datasets: [
       {
-        data: weeklyData.length > 0 ? weeklyData.map(day => day.calories) : [0, 0, 0, 0, 0, 0, 0],
+        data:
+          weeklyData.length > 0
+            ? weeklyData.map(day => day.calories)
+            : [0, 0, 0, 0, 0, 0, 0],
         color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
         strokeWidth: 2,
       },
@@ -208,7 +213,9 @@ const HomeScreen = () => {
         <Text style={styles.waterTitle}>Water Intake</Text>
         <View style={styles.waterProgress}>
           <View style={styles.waterInfo}>
-            <Text style={styles.waterAmount}>{waterIntake} / {waterGoal} cups</Text>
+            <Text style={styles.waterAmount}>
+              {waterIntake} / {waterGoal} cups
+            </Text>
             <Text style={styles.waterPercentage}>
               {Math.round((waterIntake / waterGoal) * 100)}%
             </Text>
@@ -447,4 +454,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-

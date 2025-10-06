@@ -1,5 +1,12 @@
 import React, {useContext} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image, Platform} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Platform,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {AuthContext} from '../context/AuthContext';
@@ -9,7 +16,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={["#4CAF50", "#81C784"]} style={styles.header}>
+      <LinearGradient colors={['#4CAF50', '#81C784']} style={styles.header}>
         <Icon name="restaurant" size={64} color="#ffffff" />
         <Text style={styles.title}>Macro Tracker</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
@@ -18,7 +25,9 @@ const LoginScreen = () => {
       <View style={styles.content}>
         <TouchableOpacity style={styles.googleButton} onPress={signInGoogle}>
           <Image
-            source={{ uri: 'https://developers.google.com/identity/images/g-logo.png'}}
+            source={{
+              uri: 'https://developers.google.com/identity/images/g-logo.png',
+            }}
             style={styles.googleLogo}
           />
           <Text style={styles.googleText}>Continue with Google</Text>
@@ -98,5 +107,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-
-

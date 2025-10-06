@@ -20,6 +20,7 @@ The app supports sign-in with Google and (on iOS) Sign in with Apple.
 ### Setup
 
 1. Google Sign-In
+
    - Create a project in Google Cloud Console and configure OAuth consent screen.
    - Create an OAuth Client ID of type "Web application" and note the Web Client ID.
    - Replace the placeholder in `src/App.js` for `googleWebClientId` with your Web Client ID.
@@ -35,6 +36,7 @@ On launch, unauthenticated users see the login screen with Google and Apple butt
 ## Screenshots
 
 The app includes four main screens:
+
 - **Home**: Daily macro overview with progress bars and weekly charts
 - **Camera**: Photo capture and barcode scanning interface
 - **History**: Past food entries organized by date
@@ -52,17 +54,20 @@ The app includes four main screens:
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd macro-tracker-demo
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **iOS Setup** (macOS only)
+
    ```bash
    cd ios && pod install && cd ..
    ```
@@ -75,16 +80,19 @@ The app includes four main screens:
 ### Running the App
 
 **For Android:**
+
 ```bash
 npm run android
 ```
 
 **For iOS:**
+
 ```bash
 npm run ios
 ```
 
 **Start Metro bundler:**
+
 ```bash
 npm start
 ```
@@ -94,16 +102,19 @@ npm start
 The app requires the following permissions:
 
 ### Android
+
 - `CAMERA`: For taking photos and scanning barcodes
 - `WRITE_EXTERNAL_STORAGE`: For saving photos (if needed)
 
 ### iOS
+
 - `NSCameraUsageDescription`: For camera access
 - `NSPhotoLibraryUsageDescription`: For photo library access
 
 ## Dependencies
 
 ### Core Dependencies
+
 - `react-native-vision-camera`: Modern camera library
 - `react-native-permissions`: Permission management
 - `@react-native-async-storage/async-storage`: Local data storage
@@ -113,6 +124,7 @@ The app requires the following permissions:
 - `@react-navigation/native`: Navigation system
 
 ### Development Dependencies
+
 - `@babel/core`: JavaScript transpilation
 - `eslint`: Code linting
 - `jest`: Testing framework
@@ -133,21 +145,25 @@ src/
 ## Key Features Implementation
 
 ### Camera Integration
+
 - Uses `react-native-vision-camera` for high-performance camera access
 - Supports both photo capture and barcode scanning modes
 - Automatic permission handling
 
 ### Barcode Scanning
+
 - Simulated barcode scanning (can be replaced with real barcode scanner)
 - Product lookup with nutritional information
 - Automatic macro calculation
 
 ### Macro Tracking
+
 - Real-time macro calculation and storage
 - Daily goal tracking with progress visualization
 - Weekly analytics with charts
 
 ### Data Persistence
+
 - All data stored locally using AsyncStorage
 - Food history with timestamps
 - User profile and goal settings
@@ -156,16 +172,21 @@ src/
 ## Customization
 
 ### Adding Real Barcode Scanning
+
 Replace the simulated barcode scanning in `CameraScreen.js` with a real barcode scanner library like `react-native-barcode-scanner`.
 
 ### Food Recognition API
+
 Integrate with food recognition APIs like:
+
 - Google Vision API
 - Clarifai Food API
 - Microsoft Computer Vision API
 
 ### Nutritional Database
+
 Connect to nutritional databases like:
+
 - USDA Food Database
 - Edamam Nutrition API
 - Spoonacular API
@@ -188,18 +209,21 @@ This project includes automated CI/CD pipelines using GitHub Actions:
 ### Workflows
 
 1. **Android CI/CD** (`.github/workflows/android.yml`)
+
    - Runs on push/PR to main/develop branches
    - Automated testing (linting, unit tests)
    - Android APK build and artifact upload
    - Automatic release creation on main branch
 
 2. **iOS CI/CD** (`.github/workflows/ios.yml`)
+
    - Runs on push/PR to main/develop branches
    - Automated testing (linting, unit tests)
    - iOS app build and artifact upload
    - Automatic release creation on main branch
 
 3. **Automated Testing** (`.github/workflows/test.yml`)
+
    - Multi-Node.js version testing (16, 18, 20)
    - ESLint code quality checks
    - Jest unit tests with coverage
@@ -215,6 +239,7 @@ This project includes automated CI/CD pipelines using GitHub Actions:
 ### Setup for CI/CD
 
 1. **Secrets Configuration** (Repository Settings → Secrets):
+
    ```
    GITHUB_TOKEN (automatically provided)
    KEYSTORE_BASE64 (base64 encoded keystore file)
@@ -222,16 +247,18 @@ This project includes automated CI/CD pipelines using GitHub Actions:
    ```
 
 2. **Branch Protection Rules**:
+
    - Require status checks to pass before merging
    - Require branches to be up to date before merging
    - Enable required status checks: `test`, `build-android`, `build-ios`
 
 3. **Release Process**:
+
    ```bash
    # Create a new release
    git tag v1.0.0
    git push origin v1.0.0
-   
+
    # Or use GitHub Actions manual trigger
    # Go to Actions → Release Workflow → Run workflow
    ```
@@ -259,11 +286,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For support and questions, please open an issue in the repository or contact the development team.
 
 ## Nutrition API Setup
+
 By default the app uses **Open Food Facts** (free, no API key required) to enrich foods from names like "1 medium apple" or product names. If a product has per-serving nutrition, it is used; otherwise values are derived from per-100g and the serving size.
 
 Optionally, you can switch to paid providers and set keys:
+
 - Edamam Nutrition Data API
 - Nutritionix Natural Language API
 
 Configure provider and keys via environment variables and `CONFIG.provider` in `src/services/NutritionAPI.js`.
-

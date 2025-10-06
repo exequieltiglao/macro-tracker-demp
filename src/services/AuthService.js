@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import appleAuth, {
+  AppleButton,
+} from '@invertase/react-native-apple-authentication';
 
 const AUTH_STORAGE_KEY = 'auth_user';
 
-export const configureGoogleSignin = (webClientId) => {
+export const configureGoogleSignin = webClientId => {
   GoogleSignin.configure({
     webClientId,
     offlineAccess: false,
@@ -17,7 +19,7 @@ export const getStoredUser = async () => {
 };
 
 export const signInWithGoogle = async () => {
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
   const userInfo = await GoogleSignin.signIn();
   const user = {
     provider: 'google',
@@ -40,7 +42,9 @@ export const signInWithApple = async () => {
     provider: 'apple',
     id: response.user,
     name: response.fullName?.givenName
-      ? `${response.fullName?.givenName || ''} ${response.fullName?.familyName || ''}`.trim()
+      ? `${response.fullName?.givenName || ''} ${
+          response.fullName?.familyName || ''
+        }`.trim()
       : undefined,
     email: response.email,
     identityToken: response.identityToken,
@@ -62,5 +66,3 @@ export const signOut = async () => {
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
   }
 };
-
-

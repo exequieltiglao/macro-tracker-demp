@@ -35,7 +35,7 @@ describe('GoalCalculator', () => {
       const bmr = 1500;
       const sedentary = calculateTDEE(bmr, 'sedentary');
       const active = calculateTDEE(bmr, 'active');
-      
+
       expect(active).toBeGreaterThan(sedentary);
     });
   });

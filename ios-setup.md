@@ -81,17 +81,19 @@ The app uses `react-native-vision-camera` which requires:
 ## Troubleshooting
 
 ### Pod Installation Issues
+
 - Update CocoaPods: `sudo gem install cocoapods`
 - Clean pods: `cd ios && rm -rf Pods Podfile.lock && pod install`
 - Reset Metro: `npx react-native start --reset-cache`
 
 ### Camera Permission Issues
+
 - Ensure Info.plist has proper permission descriptions
 - Check that permissions are requested at runtime
 - Verify simulator/device has camera access
 
 ### Build Issues
+
 - Clean build folder in Xcode: Product → Clean Build Folder
 - Reset Metro: `npx react-native start --reset-cache`
 - Reinstall dependencies: `rm -rf node_modules && npm install`
-
