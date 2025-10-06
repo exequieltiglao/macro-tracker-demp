@@ -1,4 +1,4 @@
-import '@testing-library/jest-native/extend-expect';
+// @testing-library/react-native v12.4+ has built-in Jest matchers
 
 // Mock react-native-vector-icons
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
