@@ -2,7 +2,7 @@ name: Android CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/ci-cd-pipeline]
   pull_request:
     branches: [main]
 
@@ -82,7 +82,7 @@ jobs:
   deploy-android:
     needs: build-android
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd-pipeline'
 
     steps:
       - name: Download APK artifact
@@ -94,8 +94,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: app-debug.apk
-          tag_name: android-v${{ github.run_number }}
-          name: Android Release v${{ github.run_number }}
+          tag_name: android-${{ github.ref_name }}-v${{ github.run_number }}
+          name: Android Release ${{ github.ref_name }} v${{ github.run_number }}
           body: |
             Android APK build for Macro Tracker Demo
 

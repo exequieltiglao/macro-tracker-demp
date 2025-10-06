@@ -2,7 +2,7 @@ name: iOS CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/ci-cd-pipeline]
   pull_request:
     branches: [main]
 
@@ -83,7 +83,7 @@ jobs:
   deploy-ios:
     needs: build-ios
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd-pipeline'
 
     steps:
       - name: Download iOS artifact
@@ -95,8 +95,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: MacroTrackerDemo.app
-          tag_name: ios-v${{ github.run_number }}
-          name: iOS Release v${{ github.run_number }}
+          tag_name: ios-${{ github.ref_name }}-v${{ github.run_number }}
+          name: iOS Release ${{ github.ref_name }} v${{ github.run_number }}
           body: |
             iOS App build for Macro Tracker Demo
 
