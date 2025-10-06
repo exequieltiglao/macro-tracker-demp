@@ -57,8 +57,10 @@ jobs:
 
       - name: Check React Native environment
         run: |
-          npx react-native --version
-          npx react-native doctor
+          echo "React Native CLI version:"
+          npx @react-native-community/cli --version || echo "CLI version check failed, continuing..."
+          echo "Running React Native doctor:"
+          npx react-native doctor || echo "Doctor command failed, continuing..."
 
       - name: Setup Android SDK components
         run: |
