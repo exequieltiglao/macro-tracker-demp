@@ -32,7 +32,7 @@ jobs:
   build-ios:
     needs: test
     runs-on: macos-latest
-    if: false  # iOS project not initialized - skip build
+    if: false  # iOS project not initialized - focus on Android first
 
     steps:
       - name: Checkout repository
@@ -84,7 +84,7 @@ jobs:
   deploy-ios:
     needs: build-ios
     runs-on: macos-latest
-    if: false  # iOS project not initialized - skip deploy
+    if: false  # iOS project not initialized - focus on Android first
 
     steps:
       - name: Download iOS artifact
