@@ -1,11 +1,20 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
 /**
- * Metro configuration
+ * Metro configuration for CI builds
  * https://facebook.github.io/metro/docs/configuration
- *
- * @type {import('metro-config').MetroConfig}
  */
-const config = {};
+const config = {
+  resolver: {
+    // Disable symlinks to avoid CI issues
+    symlinks: false,
+  },
+  transformer: {
+    // Disable minification for faster builds
+    minifierConfig: {
+      mangle: false,
+    },
+  },
+};
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
