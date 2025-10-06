@@ -55,6 +55,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check React Native environment
+        run: |
+          npx react-native --version
+          npx react-native doctor
+
+      - name: Setup Android SDK components
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
@@ -68,10 +78,21 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
+      - name: Start Metro bundler
+        run: |
+          npm start --reset-cache &
+          sleep 10
+        env:
+          CI: true
+
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          export ANDROID_HOME=$ANDROID_HOME
+          export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+          ./gradlew assembleDebug --stacktrace --info
+        env:
+          ANDROID_HOME: ${{ secrets.ANDROID_HOME || '/usr/local/lib/android/sdk' }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
