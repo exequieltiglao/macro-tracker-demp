@@ -32,6 +32,7 @@ jobs:
   build-ios:
     needs: test
     runs-on: macos-latest
+    if: "hashFiles('ios/Podfile') != ''"
 
     steps:
       - name: Checkout repository
@@ -83,7 +84,7 @@ jobs:
   deploy-ios:
     needs: build-ios
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd-pipeline'
+    if: "(github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd-pipeline') && hashFiles('ios/Podfile') != ''"
 
     steps:
       - name: Download iOS artifact
