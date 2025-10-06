@@ -32,7 +32,7 @@ jobs:
   build-ios:
     needs: test
     runs-on: macos-latest
-    if: "hashFiles('ios/Podfile') != ''"
+    if: false  # iOS project not initialized - skip build
 
     steps:
       - name: Checkout repository
@@ -84,7 +84,7 @@ jobs:
   deploy-ios:
     needs: build-ios
     runs-on: macos-latest
-    if: "(github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd-pipeline') && hashFiles('ios/Podfile') != ''"
+    if: false  # iOS project not initialized - skip deploy
 
     steps:
       - name: Download iOS artifact
